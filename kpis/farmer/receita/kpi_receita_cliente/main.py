@@ -16,7 +16,7 @@ from datetime import datetime, timedelta
 import traceback
 
 # Caminho absoluto para o diretório raiz do projeto
-BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../'))
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../../'))
 sys.path.append(BASE_DIR)
 
 # Adicionando o diretório atual ao PATH

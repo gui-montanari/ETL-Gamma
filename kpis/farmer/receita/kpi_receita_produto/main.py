@@ -2,10 +2,10 @@
 # -*- coding: utf-8 -*-
 
 """
-Script principal para execução do ETL do KPI de Receitas por Farmer.
+Script principal para execução do ETL do KPI de Receitas por Produto.
 
 Este script coordena a execução do processo de ETL para o
-KPI de receitas, incluindo extração, transformação e carregamento de dados.
+KPI de receitas por produto, incluindo extração, transformação e carregamento de dados.
 """
 
 import argparse
@@ -17,8 +17,9 @@ import traceback
 import pandas as pd
 
 # Caminho absoluto para o diretório raiz do projeto
-BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../'))
-sys.path.append(BASE_DIR)
+current_dir = os.path.dirname(os.path.abspath(__file__))
+root_dir = os.path.abspath(os.path.join(current_dir, '../../../../'))
+sys.path.append(root_dir)
 
 # Adicionando o diretório atual ao PATH
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -39,7 +40,7 @@ from transform import (
 )
 
 from load import (
-    load_receita_farmer
+    load_receita_produto
 )
 
 # Configurando logging
@@ -51,11 +52,11 @@ def setup_logging(log_level='INFO'):
         log_level (str): Nível de logging (DEBUG, INFO, WARNING, ERROR, CRITICAL)
     """
     # Criando o diretório de logs se não existir
-    log_dir = os.path.join(BASE_DIR, 'logs')
+    log_dir = os.path.join(root_dir, 'logs')
     os.makedirs(log_dir, exist_ok=True)
     
     # Nome do arquivo de log com data
-    log_filename = f"kpi_receita_farmer_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
+    log_filename = f"kpi_receita_produto_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
     log_path = os.path.join(log_dir, log_filename)
     
     # Configurando o logger
@@ -79,7 +80,7 @@ def parse_arguments():
     Returns:
         argparse.Namespace: Argumentos analisados
     """
-    parser = argparse.ArgumentParser(description='ETL para KPI de Receitas por Farmer')
+    parser = argparse.ArgumentParser(description='ETL para KPI de Receitas por Produto')
     
     parser.add_argument(
         '--farmer-id',
@@ -103,12 +104,20 @@ def parse_arguments():
         help='Nível de logging (default: INFO)'
     )
     
+    parser.add_argument(
+        '--update-mode',
+        type=str,
+        choices=['full', 'incremental'],
+        default='full',
+        help='Modo de atualização: "full" para reprocessar tudo, "incremental" apenas para novos dados'
+    )
+    
     return parser.parse_args()
 
 
-def process_receita_farmer(farmer_id, months_back, logger):
+def process_receita_produto(farmer_id, months_back, logger):
     """
-    Processa os dados de receita e comissão por farmer.
+    Processa os dados de receita e comissão por produto.
     
     Args:
         farmer_id (int, optional): ID do farmer para filtrar
@@ -118,7 +127,7 @@ def process_receita_farmer(farmer_id, months_back, logger):
     Returns:
         tuple: (df_meses_anteriores, df_mes_atual, df_final) - DataFrames processados
     """
-    logger.info(f"Iniciando processamento de receita por farmer para farmer_id: {farmer_id if farmer_id else 'Todos'}")
+    logger.info(f"Iniciando processamento de receita por produto para farmer_id: {farmer_id if farmer_id else 'Todos'}")
     
     # Extração
     df_meses_anteriores = extract_meses_anteriores(farmer_id, months_back)
@@ -139,7 +148,7 @@ def process_receita_farmer(farmer_id, months_back, logger):
     # Combinação dos resultados
     df_receita_final = pd.concat([df_meses_anteriores_transformado, df_mes_atual_transformado], ignore_index=True)
     
-    logger.info(f"Processamento de receita por farmer concluído. Total registros: {len(df_receita_final)}")
+    logger.info(f"Processamento de receita por produto concluído. Total registros: {len(df_receita_final)}")
     
     return df_meses_anteriores_transformado, df_mes_atual_transformado, df_receita_final
 
@@ -155,22 +164,22 @@ def main():
     logger = setup_logging(args.log_level)
     
     try:
-        logger.info("Iniciando ETL do KPI de Receitas por Farmer")
+        logger.info("Iniciando ETL do KPI de Receitas por Produto")
         logger.info(f"Parâmetros: farmer_id={args.farmer_id}, months_back={args.months_back}")
         
-        # Processamento de receita/comissão
-        df_meses_anteriores, df_mes_atual, df_receita_final = process_receita_farmer(
+        # Processamento de receita/comissão por produto
+        df_meses_anteriores, df_mes_atual, df_receita_final = process_receita_produto(
             args.farmer_id, args.months_back, logger
         )
         
         # Carregamento de dados
-        success = load_receita_farmer(df_meses_anteriores, df_mes_atual, args.farmer_id)
+        success = load_receita_produto(df_meses_anteriores, df_mes_atual, args.farmer_id)
         
         if success:
-            logger.info("ETL do KPI de Receitas por Farmer concluído com sucesso")
+            logger.info("ETL do KPI de Receitas por Produto concluído com sucesso")
             return 0
         else:
-            logger.error("ETL do KPI de Receitas por Farmer concluído com erros")
+            logger.error("ETL do KPI de Receitas por Produto concluído com erros")
             return 1
     
     except Exception as e:

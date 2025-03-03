@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Módulo para gerenciamento de esquemas e tabelas do banco de dados.
+Módulo para gerenciamento de esquemas e tabelas do banco de dados relacionadas a receitas.
 """
 
 import logging
@@ -169,74 +169,6 @@ def create_receita_farmer_table(conn=None):
     finally:
         if conn and close_conn:
             conn.close()
-
-def create_folha_pagamento_table(conn=None):
-    """
-    Cria ou atualiza a tabela de folha de pagamento.
-    
-    Args:
-        conn (psycopg2.connection, optional): Conexão com o banco de dados
-        
-    Returns:
-        bool: True se operação foi bem sucedida
-    """
-    close_conn = False
-    try:
-        # Se não foi fornecida uma conexão, cria uma nova
-        if conn is None:
-            conn = get_connection()
-            close_conn = True
-            
-        # Garantindo que o schema exista
-        create_schema_if_not_exists(conn, 'analysis')
-        
-        logger.info("Verificando tabela de folha de pagamento")
-        
-        with conn.cursor() as cursor:
-            # Verifica se a tabela existe
-            cursor.execute("""
-            SELECT EXISTS (
-                SELECT FROM information_schema.tables 
-                WHERE table_schema = 'analysis' 
-                AND table_name = 'folha_pagamento'
-            );
-            """)
-            
-            tabela_existe = cursor.fetchone()[0]
-            
-            if not tabela_existe:
-                # Cria a tabela com a estrutura completa
-                cursor.execute("""
-                CREATE TABLE analysis.folha_pagamento (
-                    id SERIAL PRIMARY KEY,
-                    mes DATE NOT NULL,
-                    mes_formatado VARCHAR(7) NOT NULL,
-                    farmer_id INTEGER,
-                    employee_name VARCHAR(255),
-                    salario_base NUMERIC(15,2),
-                    comissao NUMERIC(15,2),
-                    total NUMERIC(15,2),
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    UNIQUE(mes, farmer_id)
-                );
-                """)
-                logger.info("Tabela 'folha_pagamento' criada com sucesso")
-        
-        if close_conn:
-            conn.commit()
-            
-        logger.info("Verificação da tabela concluída com sucesso")
-        return True
-    
-    except Exception as e:
-        logger.error(f"Erro ao verificar/criar tabela: {str(e)}")
-        if conn and close_conn:
-            conn.rollback()
-        return False
-    finally:
-        if conn and close_conn:
-            conn.close()
             
 def create_receita_cliente_table(conn=None):
     """
@@ -299,6 +231,81 @@ def create_receita_cliente_table(conn=None):
                 );
                 """)
                 logger.info("Tabela 'receita_cliente' criada com sucesso")
+        
+        if close_conn:
+            conn.commit()
+            
+        logger.info("Verificação da tabela concluída com sucesso")
+        return True
+    
+    except Exception as e:
+        logger.error(f"Erro ao verificar/criar tabela: {str(e)}")
+        if conn and close_conn:
+            conn.rollback()
+        return False
+    finally:
+        if conn and close_conn:
+            conn.close()
+            
+def create_receita_produto_table(conn=None):
+    """
+    Cria ou atualiza a tabela de receita e comissão por produto.
+    
+    Args:
+        conn (psycopg2.connection, optional): Conexão com o banco de dados
+        
+    Returns:
+        bool: True se operação foi bem sucedida
+    """
+    close_conn = False
+    try:
+        # Se não foi fornecida uma conexão, cria uma nova
+        if conn is None:
+            conn = get_connection()
+            close_conn = True
+            
+        # Garantindo que o schema exista
+        create_schema_if_not_exists(conn, 'analysis')
+        
+        logger.info("Verificando tabela de receita por produto")
+        
+        with conn.cursor() as cursor:
+            # Verifica se a tabela existe
+            cursor.execute("""
+            SELECT EXISTS (
+                SELECT FROM information_schema.tables 
+                WHERE table_schema = 'analysis' 
+                AND table_name = 'receita_produto'
+            );
+            """)
+            
+            tabela_existe = cursor.fetchone()[0]
+            
+            if not tabela_existe:
+                # Cria a tabela com a estrutura completa
+                cursor.execute("""
+                CREATE TABLE analysis.receita_produto (
+                    id SERIAL PRIMARY KEY,
+                    mes DATE NOT NULL,
+                    mes_formatado VARCHAR(7) NOT NULL,
+                    produto VARCHAR(50) NOT NULL,
+                    receita_bruta NUMERIC(15,2),
+                    receita_liquida NUMERIC(15,2),
+                    comissao_bruta NUMERIC(15,2),
+                    comissao_liquida NUMERIC(15,2),
+                    farmer_id INTEGER,
+                    employee_name VARCHAR(255),
+                    fonte VARCHAR(50) NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                );
+                
+                -- Índices para melhorar performance de consultas
+                CREATE INDEX idx_receita_produto_mes ON analysis.receita_produto(mes);
+                CREATE INDEX idx_receita_produto_produto ON analysis.receita_produto(produto);
+                CREATE INDEX idx_receita_produto_farmer_id ON analysis.receita_produto(farmer_id);
+                """)
+                logger.info("Tabela 'receita_produto' criada com sucesso")
         
         if close_conn:
             conn.commit()
