@@ -1,0 +1,37 @@
+# Arquivos de ambiente
+.env
+
+# Logs
+logs/
+*.log
+
+# Cache do Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribuição / empacotamento
+dist/
+build/
+*.egg-info/
+
+# Ambiente virtual
+venv/
+env/
+ENV/
+
+# Arquivos temporários
+*.tmp
+*.bak
+*.swp
+
+# Arquivos de IDE
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# Arquivos de teste
+.coverage
+htmlcov/
+.pytest_cache/
