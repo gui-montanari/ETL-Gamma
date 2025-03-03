@@ -19,7 +19,7 @@ BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../'))
 sys.path.append(BASE_DIR)
 
 from utils.db_connection import DatabaseConnection
-from utils.db_schema import create_receita_cliente_table
+from utils.db_schema_farmer.db_schema_receita import create_receita_cliente_table
 
 logger = logging.getLogger(__name__)
 
